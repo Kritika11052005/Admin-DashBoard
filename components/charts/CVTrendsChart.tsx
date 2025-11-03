@@ -1,6 +1,5 @@
-// CVTrendsChart.tsx
 'use client';
-
+// CVTrendsChart.tsx
 import { useEffect, useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
