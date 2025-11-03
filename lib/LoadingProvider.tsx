@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, ReactNode, Suspense } from 'react';
 import { usePathname, useSearchParams } from 'next/navigation';
 import Loader from '@/components/Loader';
 
@@ -16,7 +16,7 @@ const LoadingContext = createContext<LoadingContextType>({
 
 export const useLoading = () => useContext(LoadingContext);
 
-export function LoadingProvider({ children }: { children: ReactNode }) {
+function LoadingProviderContent({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
   const [isNavigating, setIsNavigating] = useState(false);
   const pathname = usePathname();
@@ -63,5 +63,20 @@ export function LoadingProvider({ children }: { children: ReactNode }) {
         {children}
       </div>
     </LoadingContext.Provider>
+  );
+}
+
+export function LoadingProvider({ children }: { children: ReactNode }) {
+  return (
+    <Suspense fallback={
+      <Loader
+        variant="brain"
+        size="xl"
+        text="Loading AariyaTech Analytics..."
+        fullScreen
+      />
+    }>
+      <LoadingProviderContent>{children}</LoadingProviderContent>
+    </Suspense>
   );
 }
