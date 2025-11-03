@@ -1,6 +1,5 @@
-// KPICards.tsx
 'use client';
-
+// KPICards.tsx
 import { motion } from 'framer-motion';
 import { Card } from '@/components/ui/card';
 import { LucideIcon } from 'lucide-react';
