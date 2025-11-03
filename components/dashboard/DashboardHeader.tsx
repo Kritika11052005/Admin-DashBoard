@@ -2,10 +2,10 @@
 
 import { Button } from '@/components/ui/button';
 import { LogOut, Search, Sun, Moon } from 'lucide-react';
-import { useRouter } from 'next/navigation';
 import { Input } from '@/components/ui/input';
 import { useState } from 'react';
 import { useTheme } from '@/lib/ThemeContext';
+import { useAuth } from '@/lib/AuthContext';
 
 interface DashboardHeaderProps {
   userName?: string;
@@ -13,16 +13,10 @@ interface DashboardHeaderProps {
 }
 
 export default function DashboardHeader({ userName = 'Admin', onSearch }: DashboardHeaderProps) {
-  const router = useRouter();
   const [searchQuery, setSearchQuery] = useState('');
   const { theme, toggleTheme } = useTheme();
+  const { logout } = useAuth();
   const isDark = theme === 'dark';
-
-  const handleLogout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    router.push('/login');
-  };
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -83,7 +77,7 @@ export default function DashboardHeader({ userName = 'Admin', onSearch }: Dashbo
 
             {/* Logout Button */}
             <Button
-              onClick={handleLogout}
+              onClick={logout}
               variant="outline"
               className="bg-card border-border text-foreground hover:bg-muted hover:border-primary transition-all"
             >

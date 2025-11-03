@@ -1,11 +1,12 @@
 'use client';
 
-import { useState,useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Eye, EyeOff } from 'lucide-react';
+import { useAuth } from '@/lib/AuthContext';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -14,12 +15,16 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const { login, token } = useAuth();
+
+  // Redirect if already logged in
   useEffect(() => {
-    const token = localStorage.getItem('token');
     if (token) {
       router.push('/dashboard');
     }
-  }, [router]);
+  }, [token, router]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
@@ -35,20 +40,23 @@ export default function LoginPage() {
       const data = await response.json();
 
       if (data.success) {
-        // Store token and user in localStorage
-        localStorage.setItem('token', data.data.token);
-        localStorage.setItem('user', JSON.stringify(data.data.user));
+        // Use the login function from AuthContext
+        // This will handle localStorage AND cookie synchronization
+        login(data.data.token, data.data.user);
 
-        // Redirect to dashboard
-        router.push('/dashboard');
+        // Redirect to the page they were trying to access, or dashboard
+        const from = searchParams.get('from') || '/dashboard';
+        router.push(from);
+        router.refresh(); // Refresh to trigger middleware
       } else {
         setError('Invalid credentials. Try admin@aariyatech.com / Admin@123');
       }
     } catch (error) {
+      console.error('Login error:', error);
       setError('Login failed. Please try again.');
+    } finally {
+      setLoading(false);
     }
-
-    setLoading(false);
   };
 
   return (
@@ -71,6 +79,7 @@ export default function LoginPage() {
               placeholder="admin@aariyatech.com"
               className="bg-zinc-800 border-zinc-700 text-white"
               required
+              disabled={loading}
             />
           </div>
 
@@ -86,12 +95,14 @@ export default function LoginPage() {
                 placeholder="Enter password"
                 className="bg-zinc-800 border-zinc-700 text-white pr-10"
                 required
+                disabled={loading}
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
                 className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-300 transition-colors"
                 aria-label={showPassword ? 'Hide password' : 'Show password'}
+                disabled={loading}
               >
                 {showPassword ? (
                   <EyeOff className="w-5 h-5" />

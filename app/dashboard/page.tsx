@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { 
   Users, 
   FileText, 
@@ -10,6 +9,7 @@ import {
   DollarSign,
   BarChart3
 } from 'lucide-react';
+import { useAuth } from '@/lib/AuthContext';
 
 // Import components
 import DashboardHeader from '@/components/dashboard/DashboardHeader';
@@ -33,30 +33,20 @@ interface KPIData {
 }
 
 export default function DashboardPage() {
-  const router = useRouter();
+  const { user } = useAuth(); // Get user from AuthContext
   const [kpiData, setKpiData] = useState<KPIData | null>(null);
   const [loading, setLoading] = useState(true);
-  const [userName, setUserName] = useState('Admin');
   const [searchQuery, setSearchQuery] = useState('');
   const [filteredView, setFilteredView] = useState(false);
   const [activePage, setActivePage] = useState('overview');
 
+  // Get username from AuthContext
+  const userName = user?.name || 'Admin';
+
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    const user = localStorage.getItem('user');
-
-    if (!token) {
-      router.push('/login');
-      return;
-    }
-
-    if (user) {
-      const userData = JSON.parse(user);
-      setUserName(userData.name || 'Admin');
-    }
-
+    // Layout already handles auth, just fetch data
     fetchKPIData();
-  }, [router]);
+  }, []);
 
   const fetchKPIData = async () => {
     try {
@@ -81,7 +71,7 @@ export default function DashboardPage() {
   if (loading) {
     return (
       <div className="min-h-screen bg-white dark:bg-black flex items-center justify-center transition-colors">
-        <div className="text-gray-900 dark:text-white text-xl">Loading dashboard...</div>
+        <div className="text-gray-900 dark:text-white text-xl">Loading dashboard data...</div>
       </div>
     );
   }
