@@ -1,11 +1,11 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { 
-  Users, 
-  FileText, 
-  Star, 
-  TrendingUp, 
+import {
+  Users,
+  FileText,
+  Star,
+  TrendingUp,
   DollarSign,
   BarChart3
 } from 'lucide-react';
@@ -123,9 +123,9 @@ export default function DashboardPage() {
 
   const filteredKpiCards = searchQuery
     ? kpiCards.filter(card =>
-        card.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        card.value.toString().toLowerCase().includes(searchQuery.toLowerCase())
-      )
+      card.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      card.value.toString().toLowerCase().includes(searchQuery.toLowerCase())
+    )
     : kpiCards;
 
   // Render content based on active page
@@ -147,11 +147,13 @@ export default function DashboardPage() {
             )}
 
             {/* KPI Cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 xl:gap-6 mb-10">
-              {filteredKpiCards.map((card, index) => (
-                <KPICard key={card.title} {...card} index={index} />
-              ))}
-            </div>
+            {/* KPI Cards */}
+            {/* KPI Cards */}
+<div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-6 mb-10">
+  {filteredKpiCards.map((card, index) => (
+    <KPICard key={card.title} {...card} index={index} />
+  ))}
+</div>
 
             {/* AI Insights Section */}
             <div className="mb-8">
@@ -159,35 +161,35 @@ export default function DashboardPage() {
             </div>
 
             {/* Charts */}
-            {(!filteredView || searchQuery.toLowerCase().includes('chart') || 
+            {(!filteredView || searchQuery.toLowerCase().includes('chart') ||
               searchQuery.toLowerCase().includes('analytics') ||
               searchQuery.toLowerCase().includes('country') ||
               searchQuery.toLowerCase().includes('cv') ||
               searchQuery.toLowerCase().includes('user')) && (
-              <>
-                <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 mb-6">
-                  <div className="min-h-[400px]">
-                    <CountryChart />
+                <>
+                  <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 mb-6">
+                    <div className="min-h-[400px]">
+                      <CountryChart />
+                    </div>
+                    <div className="min-h-[400px]">
+                      <CVTrendsChart />
+                    </div>
                   </div>
-                  <div className="min-h-[400px]">
-                    <CVTrendsChart />
-                  </div>
-                </div>
 
-                <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 mb-6">
-                  <div className="min-h-[400px]">
-                    <PaidVsFreeChart />
+                  <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 mb-6">
+                    <div className="min-h-[400px]">
+                      <PaidVsFreeChart />
+                    </div>
+                    <div className="min-h-[400px]">
+                      <CareerStageChart />
+                    </div>
                   </div>
-                  <div className="min-h-[400px]">
-                    <CareerStageChart />
-                  </div>
-                </div>
 
-                <div className="w-full">
-                  <TopUsersTable />
-                </div>
-              </>
-            )}
+                  <div className="w-full">
+                    <TopUsersTable />
+                  </div>
+                </>
+              )}
           </>
         );
 
