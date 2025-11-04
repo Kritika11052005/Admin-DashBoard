@@ -12,7 +12,7 @@ A comprehensive, modern admin analytics dashboard built with Next.js 16, featuri
 
 ## 🌟 Live Demo
 
-🔗 [View Live Dashboard](admin-dash-board-khaki.vercel.app)
+**🔗 [View Live Dashboard](https://admin-dash-board-khaki.vercel.app)**
 
 ### Demo Credentials
 ```
