@@ -1,16 +1,12 @@
-import OpenAI from 'openai';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 
-const XAI_API_KEY = process.env.XAI_API_KEY || '';
+const API_KEY = process.env.GEMINI_API_KEY || '';
 
-if (!XAI_API_KEY) {
-  console.warn('⚠️ XAI_API_KEY not found in environment variables');
+if (!API_KEY) {
+  console.warn('⚠️ GEMINI_API_KEY not found in environment variables');
 }
 
-// Grok uses OpenAI-compatible API
-const client = new OpenAI({
-  apiKey: XAI_API_KEY,
-  baseURL: 'https://api.x.ai/v1',
-});
+const genAI = new GoogleGenerativeAI(API_KEY);
 
 export async function generateAIInsights(analyticsData: {
   totalUsers: number;
@@ -24,12 +20,36 @@ export async function generateAIInsights(analyticsData: {
   countryDistribution: Array<{ country: string; count: number }>;
   careerStageBreakdown: Array<{ stage: string; count: number }>;
 }) {
-  if (!XAI_API_KEY) {
-    throw new Error('XAI_API_KEY not configured');
-  }
-
   try {
-    const prompt = `You are an expert data analyst specializing in SaaS analytics and business intelligence. Analyze the following dashboard metrics from AariyaTech, a CV/resume analysis platform, and provide 5-7 actionable insights.
+    // Try different model names in order of preference
+    const modelNames = [
+      'gemini-2.5-flash'
+    ];
+
+    let model;
+    let lastError;
+
+    // Try each model until one works
+    for (const modelName of modelNames) {
+      try {
+        model = genAI.getGenerativeModel({ model: modelName });
+        // Test if model works with a simple prompt
+        await model.generateContent('test');
+        console.log(`✅ Using model: ${modelName}`);
+        break;
+      } catch (error) {
+        lastError = error;
+        console.log(`❌ Model ${modelName} not available, trying next...`);
+        continue;
+      }
+    }
+
+    if (!model) {
+      throw lastError || new Error('No available Gemini models found');
+    }
+
+    const prompt = `
+You are an expert data analyst specializing in SaaS analytics and business intelligence. Analyze the following dashboard metrics from AariyaTech, a CV/resume analysis platform, and provide 5-7 actionable insights.
 
 **Platform Metrics:**
 - Total Users: ${analyticsData.totalUsers}
@@ -66,83 +86,40 @@ Generate exactly 5-7 insights in JSON format. Each insight must follow this exac
 4. Prioritize insights by business impact
 5. Make recommendations specific and implementable
 6. Use professional, confident language
-7. Return ONLY a valid JSON array of insights, no markdown formatting
+7. Return ONLY valid JSON array, no markdown or explanation
 
-Return format: [insight1, insight2, ...]`;
+Return format: [insight1, insight2, ...]
+`;
 
-    console.log('🚀 Generating insights with Grok AI...');
+    const result = await model.generateContent(prompt);
+    const response = await result.response;
+    const text = response.text();
 
-    const completion = await client.chat.completions.create({
-      model: 'grok-beta',
-      messages: [
-        {
-          role: 'system',
-          content: 'You are an expert SaaS analytics consultant. Provide insights in valid JSON array format only, with no markdown formatting or code blocks.'
-        },
-        {
-          role: 'user',
-          content: prompt
-        }
-      ],
-      temperature: 0.7,
-    });
+    // Extract JSON from response (remove markdown code blocks if present)
+    let jsonText = text.trim();
+    if (jsonText.startsWith('```json')) {
+      jsonText = jsonText.replace(/```json\n?/g, '').replace(/```\n?/g, '');
+    } else if (jsonText.startsWith('```')) {
+      jsonText = jsonText.replace(/```\n?/g, '');
+    }
 
-    const responseText = completion.choices[0].message.content || '[]';
+    const insights = JSON.parse(jsonText);
     
-    // Clean up response - remove markdown if present
-    let cleanedText = responseText.trim();
-    if (cleanedText.startsWith('```json')) {
-      cleanedText = cleanedText.replace(/```json\n?/g, '').replace(/```\n?/g, '');
-    } else if (cleanedText.startsWith('```')) {
-      cleanedText = cleanedText.replace(/```\n?/g, '');
-    }
-
-    // Parse the response
-    let insights;
-    try {
-      const parsed = JSON.parse(cleanedText);
-      
-      // Handle different response formats
-      if (Array.isArray(parsed)) {
-        insights = parsed;
-      } else if (parsed.insights && Array.isArray(parsed.insights)) {
-        insights = parsed.insights;
-      } else if (typeof parsed === 'object') {
-        // Try to find an array in the object
-        const arrayValue = Object.values(parsed).find(v => Array.isArray(v));
-        insights = arrayValue || [];
-      } else {
-        throw new Error('Invalid response format');
-      }
-    } catch (parseError) {
-      console.error('Failed to parse Grok response:', responseText);
-      throw new Error('Invalid JSON response from Grok');
-    }
-
     // Validate insights structure
     if (!Array.isArray(insights) || insights.length === 0) {
-      throw new Error('No insights generated');
+      throw new Error('Invalid insights format received from AI');
     }
 
-    console.log(`✅ Successfully generated ${insights.length} insights using Grok`);
     return insights;
-
-  } catch (error: unknown) {
-    const err = error instanceof Error ? error : new Error('Unknown error');
-    console.error('Grok AI Error:', err.message);
-
-    // Provide helpful error messages
-    if (err.message.includes('API key') || err.message.includes('401')) {
-      throw new Error('Invalid Grok API key. Get one at https://console.x.ai');
+  } catch (error) {
+    console.error('Gemini AI Error:', error);
+    
+    // Check if it's an API key error
+    if (error instanceof Error && error.message.includes('API key')) {
+      throw new Error('Invalid Gemini API key. Please check your .env.local file.');
     }
-    if (err.message.includes('quota') || err.message.includes('429')) {
-      throw new Error('Grok API rate limit reached. Please try again in a moment.');
-    }
-    if (err.message.includes('402')) {
-      throw new Error('Grok API billing issue. Check your account at https://console.x.ai');
-    }
-
-    throw new Error('Failed to generate AI insights');
+    
+    throw new Error('Failed to generate AI insights. Using fallback analysis.');
   }
 }
 
